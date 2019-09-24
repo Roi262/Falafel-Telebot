@@ -1,0 +1,4 @@
+# -*- coding: utf-8 -*-
+TOKEN = '914612655:AAHlgacfo71BTDA5IErN5yTo3Ss8FfFGO4I'
+TIMEZONE = 'Israel'
+TIMEZONE_COMMON_NAME = 'Israel'
