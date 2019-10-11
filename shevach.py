@@ -1,5 +1,7 @@
 import telebot
+import meal
 from telebot import types
+from dbhelper import DBHelper
 
 
 SERVED_IN = 'Served in'
@@ -18,6 +20,8 @@ main_components = ['falafel', 'shawarma']
 toppings = ['tehina', 'hummus', 'onions', 'tomato']
 
 bot = telebot.TeleBot("914612655:AAHlgacfo71BTDA5IErN5yTo3Ss8FfFGO4I")
+db = DBHelper()
+
 
 # @bot.callback_query_handler(lambda query: query.data == "v")
 # def process_callback_1(query):
@@ -28,6 +32,7 @@ bot = telebot.TeleBot("914612655:AAHlgacfo71BTDA5IErN5yTo3Ss8FfFGO4I")
 
 @bot.message_handler(commands=['start', 'help'])
 def start(message):
+    # toppings.extend(['tehina', 'hummus', 'onions', 'tomato'])
     keyboard = types.InlineKeyboardMarkup()
     for bread_type in served_in:
         keyboard.add(types.InlineKeyboardButton(
@@ -64,46 +69,71 @@ def callback_handler_yes(call):
     chat_id = call.message.chat.id
     meal[MC] = call.data
     # bot.send_message(chat_id, "Choose toppings and make your order:")
-    choose_toppings(chat_id)
+    choose_toppings(chat_id, toppings, True)
 
-def choose_toppings(chat_id):
+def choose_toppings(chat_id, toppings, first_choice=False):
     """ Choose toppings for your meal
     """
-    markup = types.ReplyKeyboardMarkup(row_width=3)
-    topping1 = types.KeyboardButton('onions')
-    topping2 = types.KeyboardButton('lettuce')
-    topping3 = types.KeyboardButton('spicy shit')
-    topping4 = types.KeyboardButton('tomato')
-    make_order = types.KeyboardButton('make order')
-    markup.row(topping1, topping2)
-    markup.row(topping3, topping4)
-    markup.row(make_order)
-    bot.send_message(chat_id, 'Choose toppings and make your order:', reply_markup=markup)
+    # TODO check that the rounding of the int is correct
+    num_of_rows = int(len(toppings)/2) + 1
+    buttons_in_row = int(len(toppings)/num_of_rows)
+    markup = types.ReplyKeyboardMarkup(row_width=num_of_rows)
+    for row in range(num_of_rows-1):
+        toppings_in_row = []
+        for i in range(buttons_in_row):
+            index = row*buttons_in_row + i
+            button = types.KeyboardButton(toppings[index])
+            toppings_in_row.append(button)
+        # toppings_in_row = [types.KeyboardButton(toppings[row*buttons_in_row + i])\
+        #      for i in range(buttons_in_row)]
+        markup.row(*toppings_in_row)
+    markup.row(types.KeyboardButton('make order'))
+    if first_choice:
+        bot.send_message(chat_id, 'Choose toppings and make your order:', reply_markup=markup)
+    else:
+        bot.send_message(chat_id, 'Any more toppings?', reply_markup=markup)
+
 
 @bot.message_handler(func=lambda message: message.text in toppings)
 def add_topping(message):
-    # bot.send_message(chat_id, "Would you like Falafel or Shawarma?", reply_markup=keyboard)
     meal[TOPPINGS].append(message.text)
+    # remove the button that represents the topping
+    toppings.remove(message.text)
+    choose_toppings(message.chat.id, toppings)
 
 
 @bot.message_handler(func=lambda message: message.text == 'make order')
 def make_order(message):
-    # echo_all = bot.message_handler(echo_all)
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton('yes', callback_data='yes, final order'),
+                 types.InlineKeyboardButton('no', callback_data='no, go back'))
+    
+    bot.send_message(message.chat.id, "Is this your final order?: " + meal, reply_markup=keyboard)
+    # TODO if no, then take user back to the beginning
+
+
+@bot.message_handler(func=lambda message: message.text == 'yes, final order')
+def finalize_order(message):
     bot.reply_to(message, "Thanks for ordering Shevach!")
+    # db.add_item(meal)
     # TODO 
-    # 1. add payment options 
-    # 2. send order to falafel maker with reference no. to the customer
-    # 3. save orders in a db
-    # 4. make it so after i choose a button (inline or custom keyboard) i CANNOT choose it again
-
+    # **DONE make it so after i choose a button (inline or custom keyboard) i CANNOT choose it again
+    #   - idea for this - remove button from inline keyboard once chosen
+    # - send order to falafel maker with reference no. to the customer
+    # - save orders in a db
+    #   - see that i am collecting all orders of all customers in one eb for one shop
+    # - set up webhook(simulation for now) instead of polling
+    # - add payment options 
     print(meal)
-
 
 # TODO polling is shitty, setup webhook
 bot.polling()
 
 
-#########################################################
+
+
+
+############REFERENCE CODE#############################################
 
 
 @bot.message_handler(commands=['start', 'help'])
