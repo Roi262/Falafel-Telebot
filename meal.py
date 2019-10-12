@@ -20,17 +20,14 @@ class Meal():
     """ A class for a meal object
     """
 
-    def __init__():
-        self.meal = {}
+    def __init__(self):
+        # self.meal = {}
         self.bread_type = ''
         self.main_component = ''
-        self.toppings = []
+        self.toppings = set()
 
     def get_toppings(self):
         return self.toppings
-
-    def set_toppings(self, toppings) :
-    	self.toppings = toppings
 
     def get_main_component(self):
         return self.main_component
@@ -44,7 +41,7 @@ class Meal():
     def set_bread_type(self, bread_type):
         self.bread_type = bread_type
 
-    def remove_topping(self, topping):
-        self.toppings.remove(topping)
+    def add_topping(self, topping):
+        self.toppings.add(topping)
 
 

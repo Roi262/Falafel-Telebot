@@ -1,23 +1,26 @@
 import telebot
+# from meal import Meal
 import meal
 from telebot import types
 from dbhelper import DBHelper
 
 
 SERVED_IN = 'Served in'
-MC = 'Main Component'
+MC, FALAFEL, SHAWARMA = 'Main Component', 'falafel', 'shawarma'
 TOPPINGS = 'Toppings'
 HAS_CHOSEN_TOPPINGS = False
 
-meal = {
-    SERVED_IN: '',
-    MC: '',                # Falafel or Shawarma
-    TOPPINGS: []            # [tehina, hummus, onions]
-}
+# meal = {
+#     SERVED_IN: '',
+#     MC: '',                # Falafel or Shawarma
+#     TOPPINGS: []            # [tehina, hummus, onions]
+# }
 
 served_in = ['pita', 'lafa', 'plate']
-main_components = ['falafel', 'shawarma']
+main_components = [FALAFEL, SHAWARMA]
 toppings = ['tehina', 'hummus', 'onions', 'tomato']
+
+my_meal = meal.Meal()
 
 bot = telebot.TeleBot("914612655:AAHlgacfo71BTDA5IErN5yTo3Ss8FfFGO4I")
 db = DBHelper()
@@ -27,12 +30,13 @@ db = DBHelper()
 # def process_callback_1(query):
 #     print('gay')
 
-
-
+# def initialize_new_meal():
 
 @bot.message_handler(commands=['start', 'help'])
 def start(message):
-    # toppings.extend(['tehina', 'hummus', 'onions', 'tomato'])
+    my_meal = meal.Meal()
+    
+
     keyboard = types.InlineKeyboardMarkup()
     for bread_type in served_in:
         keyboard.add(types.InlineKeyboardButton(
@@ -44,8 +48,8 @@ def start(message):
 
 def choose_main_comp(chat_id):
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton('falafel', callback_data='falafel'),
-                 types.InlineKeyboardButton('shawarma', callback_data='shawarma'))
+    keyboard.add(types.InlineKeyboardButton(FALAFEL, callback_data=FALAFEL),
+                 types.InlineKeyboardButton(SHAWARMA, callback_data=SHAWARMA))
 
     bot.send_message(chat_id, "Would you like Falafel or Shawarma?", reply_markup=keyboard)
     # TODO edit the previous keyboard to have a little checkmark at the bottom of the chosen button
@@ -54,7 +58,8 @@ def choose_main_comp(chat_id):
 @bot.callback_query_handler(func=lambda call: call.data in served_in)
 def callback_handler_yes(call):
     chat_id = call.message.chat.id
-    meal[SERVED_IN] = call.data
+    my_meal.set_bread_type(call.data)
+    # meal[SERVED_IN] = call.data
     # TODO edit the previous keyboard to have a little checkmark at the bottom of the chosen button
     choose_main_comp(chat_id)
 
@@ -67,7 +72,8 @@ def callback_handler_yes(call):
         call {[type]} -- [description]
     """
     chat_id = call.message.chat.id
-    meal[MC] = call.data
+    my_meal.set_main_component
+    # meal[MC] = call.data
     # bot.send_message(chat_id, "Choose toppings and make your order:")
     choose_toppings(chat_id, toppings, True)
 
@@ -96,7 +102,8 @@ def choose_toppings(chat_id, toppings, first_choice=False):
 
 @bot.message_handler(func=lambda message: message.text in toppings)
 def add_topping(message):
-    meal[TOPPINGS].append(message.text)
+    my_meal.add_topping(message.text)
+    # meal[TOPPINGS].append(message.text)
     # remove the button that represents the topping
     toppings.remove(message.text)
     choose_toppings(message.chat.id, toppings)
