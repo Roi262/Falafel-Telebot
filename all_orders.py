@@ -25,8 +25,8 @@ t = time()
 
 orders = {}
 
-def add_new_order(chat_id):
-    new_meal = meal.Meal()
+def add_new_order(chat_id, possible_toppings, num_of_states):
+    new_meal = meal.Meal(possible_toppings, num_of_states)
     orders[chat_id] = (new_meal, 0, TAKING_ORDER)
 
 def get_order_string(chat_id):
@@ -50,3 +50,16 @@ def add_order(chat_id, meal, delivery_time, meal_status=QUEUED):
 def remove_order(chat_id):
     if chat_id in orders.keys():
         orders.pop(chat_id)
+
+def update_bread_type(cid, bread_type):
+    orders[cid][MEAL].set_bread_type(bread_type)
+
+def update_mc(cid, mc):
+    orders[cid][MEAL].set_main_component(mc)
+
+def add_topping(cid, topping):
+    return orders[cid][MEAL].add_topping(topping)
+
+def get_state(cid):
+    return orders[cid][MEAL].get_state()
+
